@@ -4,8 +4,8 @@ import argparse
 import os
 import random
 
-from k_fold_validator import KFoldValidator
-from trec_score_reader import TrecScoreReader
+from readers.trec_score_reader import TrecScoreReader
+from validation.k_fold_validator import KFoldValidator
 
 
 def main(args):
@@ -17,7 +17,7 @@ def main(args):
         files += [os.path.join(directory, file) for directory in args.directory for file in
                   os.listdir(directory) if os.path.isfile(os.path.join(directory, file))]
     if len(files) == 0:
-        print('Requires at least one file to run')
+        print('Requires at least one file to run.')
         exit()
 
     # Read data

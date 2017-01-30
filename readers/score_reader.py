@@ -1,5 +1,6 @@
 import collections
-import scored
+
+from validation import scored
 
 
 class ScoreReader:
