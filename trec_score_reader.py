@@ -16,4 +16,4 @@ class TrecScoreReader(ScoreReader):
                     query, value = parts[1], parts[2].strip()
                     if query == 'all':
                         continue
-                    self._query_parameter_scores[query][parameter_id] = float(value)
+                    self._item_parameter_scores[query][parameter_id] = float(value)
