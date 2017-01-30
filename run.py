@@ -8,11 +8,6 @@ from k_fold_validator import KFoldValidator
 from trec_score_reader import TrecScoreReader
 
 
-# Types of validation
-KFOLD = 'k-fold'
-LOO = 'leave-one'
-HOLDOUT = 'hold-out'
-
 def main(args):
     # Load a list of all the supplied files
     files = []
@@ -47,8 +42,6 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--directory', action='append', help='a directory of files, each of which is an item to '
                                                                    'be included in cross-validation')
     parser.add_argument('-k', '--folds', help='number of folds to use in cross-validation', default=10)
-    parser.add_argument('-v', '--validation', choices=[KFOLD, LOO, HOLDOUT], help='type of cross-validation to run',
-                        default=KFOLD)
     parser.add_argument('-m', '--metric', help='the metric to optimize for cross-validation', required=True)
     parser.add_argument('-r', '--seed', help='set the random seed for item shuffling', default=random.random())
     parser.add_argument('-s', '--summarize', action='store_true', help='include summary statistic')
