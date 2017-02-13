@@ -8,21 +8,26 @@ class KFoldValidator:
     def __init__(self, num_folds=10):
         self.num_folds = num_folds
 
-    def cross_validate(self, *scoreds, **seed):
+    def cross_validate(self, *scoreds, **kwargs):
         """
         Run cross-validation.
 
         Split items into folds, determine optimal parameters based on training items for each fold, and then score
         test items for each fold. Combine each fold of test items to create a complete test run.
         :param scoreds: Scored instances for each item to use for training/testing
-        :param seed: An optional kwarg specifying the shuffle seed; must be named "seed"
-        :return: The per-query test scores
+        :param kwargs: Optional kwargs specifying:
+         1. the shuffle seed; must be a number with keyword "seed"
+         2. whether to include verbose output; must be a boolean with keyword "verbose"
+        :return: A dictionary of per-query test scores
         """
         def stderr(output):
-            sys.stderr.write('{}\n'.format(output))
+            if kwargs['verbose']:
+                sys.stderr.write('{}\n'.format(output))
+            else:
+                return
 
         scoreds = list(scoreds)
-        random.seed(seed.get('seed', random.random()))
+        random.seed(kwargs.get('seed', random.random()))
         random.shuffle(scoreds)
 
         num_per_chunk = max(1, len(scoreds) / self.num_folds)
