@@ -4,10 +4,8 @@ import argparse
 import os
 import random
 
-from readers.score_reader import ScoreReader
-from readers.trec_score_reader import TrecScoreReader
-from validation.k_fold_validator import KFoldValidator
-
+from cross_validation import KFoldValidator
+from score_readers import ScoreReader, TrecScoreReader
 
 formats = {
     'tsv': ScoreReader,
@@ -43,7 +41,7 @@ def main(args):
     for item in scored_test_items:
         print('{}\t{}'.format(item, str(scored_test_items[item])))
     if args.summarize:
-        print('all\t{}'.format(str(validator.summarize(scored_test_items.values()))))
+        print('all\t{}'.format(str(validator.summarize(scored_test_items))))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run cross-validation.')

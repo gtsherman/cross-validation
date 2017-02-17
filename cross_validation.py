@@ -58,14 +58,14 @@ class KFoldValidator:
         :return: The parameter key that yields the best overall score
         """
 
-        # Basically just combines the parameter->score dicts of each item into a big parameter->[score,score,...] dict
-        parameter_scores = collections.defaultdict(list)
+        # Basically inverts the item->param->score structure to a dict of param->name->score
+        parameter_items = collections.defaultdict(dict)
         for item in scoreds:
             for parameters in item.parameter_scores:
-                parameter_scores[parameters].append(item.parameter_scores[parameters])
+                parameter_items[parameters][item.name] = item.parameter_scores[parameters]
 
         # Summarizes each bucket of scores per parameter setting and finds the highest summary score
-        summarized_scores = {params: self.summarize(scores) for (params, scores) in parameter_scores.iteritems()}
+        summarized_scores = {params: self.summarize(items) for (params, items) in parameter_items.iteritems()}
         best_parameters = max(summarized_scores.iterkeys(), key=lambda params: summarized_scores[params])
         return best_parameters
 
@@ -79,11 +79,21 @@ class KFoldValidator:
         """
         return {item.name: item.parameter_scores.get(parameters, 0) for item in testing}
 
-    @staticmethod
-    def summarize(scores):
+    def summarize(self, items):
         """
         By default, calculate the arithmetic mean. Override to use a different summary function.
-        :param scores: A list or tuple of numbers to summarize
+        :param items: A dict of name->score, each representing a scored item
         :return: A single summary value, in this case the arithmetic mean
         """
-        return float(sum(scores)) / max(len(scores), 1)
+        return float(sum(items.values())) / max(len(items), 1)
+
+
+class Scored:
+    def __init__(self, name, **parameter_scores):
+        """
+        Store a scored item with scores of each parameter setting.
+        :param name: Some name uniquely representing this item.
+        :param parameter_scores: A kwargs with parameter id as key and item score for that parameter setting as value
+        """
+        self.name = name
+        self.parameter_scores = parameter_scores
