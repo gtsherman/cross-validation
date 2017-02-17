@@ -4,11 +4,21 @@ import argparse
 import os
 import random
 
+from readers.score_reader import ScoreReader
 from readers.trec_score_reader import TrecScoreReader
 from validation.k_fold_validator import KFoldValidator
 
 
+formats = {
+    'tsv': ScoreReader,
+    'trec': TrecScoreReader
+}
+
 def main(args):
+    if args.input_format == 'trec' and not args.metric:
+        print('Must specify metric for this input format.')
+        exit()
+
     # Load a list of all the supplied files
     files = []
     if args.file is not None:
@@ -21,7 +31,7 @@ def main(args):
         exit()
 
     # Read data
-    reader = TrecScoreReader()
+    reader = formats[args.input_format]()
     for file in files:
         reader.read(file, args.metric)
 
@@ -46,8 +56,9 @@ if __name__ == "__main__":
     parser.add_argument('-r', '--seed', help='set the random seed for item shuffling', default=random.random())
     parser.add_argument('-s', '--summarize', action='store_true', help='include summary statistic')
     parser.add_argument('-v', '--verbose', action='store_true', help='verbose output')
-    required = parser.add_argument_group('required arguments')
-    required.add_argument('-m', '--metric', help='the metric to optimize for cross-validation', required=True)
+    parser.add_argument('-m', '--metric', help='the metric to optimize for cross-validation; required for some input '
+                                               'formats')
+    parser.add_argument('-i', '--input-format', choices=formats.keys(), help='input file format')
     args = parser.parse_args()
 
     main(args)

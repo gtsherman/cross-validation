@@ -9,15 +9,16 @@ class ScoreReader:
 
     def read(self, file, metric):
         """
-        Read a simple key/value file and store data. Assumes file is a tab-separated list of item/value pairs,
+        Read a simple key/value file and store data. Assumes file is a whitespace-separated list of item/value pairs,
         one per line.
         :param file: The file to read
         :param metric: Ignored in this implementation, but relevant to subclasses
         """
+        parameter_id = file.split('/')[-1]
         with open(file) as f:
             for line in f:
-                item, value = line.strip().split('\t')
-                self._item_parameter_scores[item] = value
+                item, value = line.strip().split()
+                self._item_parameter_scores[item][parameter_id] = float(value)
 
     def scored_items(self):
         """
