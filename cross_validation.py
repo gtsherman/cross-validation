@@ -1,4 +1,5 @@
 import collections
+import math
 import random
 import sys
 
@@ -30,7 +31,7 @@ class KFoldValidator:
         random.seed(kwargs.get('seed', random.random()))
         random.shuffle(scoreds)
 
-        num_per_chunk = max(1, len(scoreds) / self.num_folds)
+        num_per_chunk = int(max(1, math.ceil(len(scoreds) / float(self.num_folds))))
         folds = [scoreds[i:i + num_per_chunk] for i in xrange(0, len(scoreds), num_per_chunk)]
 
         stderr('Split into {} folds'.format(str(len(folds))))
@@ -42,7 +43,7 @@ class KFoldValidator:
             training = [scorable for f in folds if f != fold for scorable in f]
             best_parameters = self.train(training)
 
-            stderr('Best params for fold {}: {}'.format(str(i), str(best_parameters)))
+            stderr('Best params for fold {} (n={}): {}'.format(str(i), str(len(fold)), str(best_parameters)))
 
             # Store scores for those parameters from test fold
             scores = self.test(fold, best_parameters)
