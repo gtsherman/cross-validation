@@ -6,8 +6,16 @@ import sys
 
 class KFoldValidator:
 
-    def __init__(self, num_folds=10):
+    def __init__(self, num_folds=10, verbose=False):
         self.num_folds = num_folds
+        self.stderr = self.verbose_stderr if verbose else self.silent_stderr
+
+    @staticmethod
+    def verbose_stderr(output):
+        sys.stderr.write('{}\n'.format(output))
+
+    @staticmethod
+    def silent_stderr(output): pass
 
     def cross_validate(self, *scoreds, **kwargs):
         """
@@ -18,37 +26,67 @@ class KFoldValidator:
         :param scoreds: Scored instances for each item to use for training/testing
         :param kwargs: Optional kwargs specifying:
          1. the shuffle seed; must be a number with keyword "seed"
-         2. whether to include verbose output; must be a boolean with keyword "verbose"
+         2. whether to concatenate the test folds; must be a boolean with keyword "concatenate"; default True
         :return: A dictionary of per-query test scores
         """
-        def stderr(output):
-            if kwargs['verbose']:
-                sys.stderr.write('{}\n'.format(output))
-            else:
-                return
+        scoreds = self.shuffle(kwargs.get('seed', random.random()), *scoreds)
+        folds = self.partition(*scoreds)
 
-        scoreds = list(scoreds)
-        random.seed(kwargs.get('seed', random.random()))
+        test_scores = self.train_then_test(folds, kwargs.get('concatenate', True))
+
+        return test_scores
+
+    def shuffle(self, seed, *scoreds):
+        # Sort the list so that we have a fair comparison given identical seed
+        scoreds = sorted(scoreds, key=lambda s: s.name)
+
+        # Shuffle
+        random.seed(seed)
         random.shuffle(scoreds)
 
+        return scoreds
+
+    def partition(self, *scoreds):
+        """
+        Partition the dataset into folds. By default, use equal size folds. Override to partition differently.
+        :param scoreds: Scored instances for each item
+        :return: A list of lists, each sublist representing a fold
+        """
+        print(str(self.num_folds))
         num_per_chunk = int(max(1, math.ceil(len(scoreds) / float(self.num_folds))))
         folds = [scoreds[i:i + num_per_chunk] for i in xrange(0, len(scoreds), num_per_chunk)]
 
-        stderr('Split into {} folds'.format(str(len(folds))))
-        stderr('Items per fold: {}'.format(str(num_per_chunk)))
+        self.stderr('Split into {} folds'.format(str(len(folds))))
+        self.stderr('Items per fold: {}'.format(str(num_per_chunk)))
 
+        return folds
+
+    def train_then_test(self, folds, concatenate):
+        """
+        Run the training and testing procedure. This involves testing on each individual fold after training on
+        the remaining folds. Override for different procedure, e.g. train/test split.
+        :param folds: The folds of scored items
+        :param concatenate: Boolean indicating whether to concatenate the test folds into a unified test output
+        :return: A dict of test items and their scores; of the form:
+            - name->score, if concatenate is True
+            - fold->name->score, if concatenate is False
+        """
         test_scores = {}
-        for i,fold in enumerate(folds):
+        for i, fold in enumerate(folds):
             # Get best parameters based on training folds
             training = [scorable for f in folds if f != fold for scorable in f]
-            best_parameters = self.train(training)
+            best_parameters, best_score = self.train(training)
 
-            stderr('Best params for fold {} (n={}): {}'.format(str(i), str(len(fold)), str(best_parameters)))
+            self.stderr('Best params for fold {} (n={}): {} ({})'.format(str(i), str(len(fold)),
+                                                                         str(best_parameters), str(best_score)))
 
             # Store scores for those parameters from test fold
             scores = self.test(fold, best_parameters)
-            for item_name in scores:
-                test_scores[item_name] = scores[item_name]
+            if concatenate:
+                for item_name in scores:
+                    test_scores[item_name] = scores[item_name]
+            else:
+                test_scores[i] = scores
 
         return test_scores
 
@@ -68,7 +106,7 @@ class KFoldValidator:
         # Summarizes each bucket of scores per parameter setting and finds the highest summary score
         summarized_scores = {params: self.summarize(items) for (params, items) in parameter_items.iteritems()}
         best_parameters = max(summarized_scores.iterkeys(), key=lambda params: summarized_scores[params])
-        return best_parameters
+        return best_parameters, summarized_scores[best_parameters]
 
     @staticmethod
     def test(testing, parameters):
