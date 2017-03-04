@@ -34,8 +34,8 @@ def main(args):
         reader.read(file, args.metric)
 
     # Run cross-validation
-    validator = KFoldValidator(args.folds)
-    scored_test_items = validator.cross_validate(*reader.scored_items(), seed=args.seed, verbose=args.verbose)
+    validator = KFoldValidator(args.folds, verbose=args.verbose)
+    scored_test_items = validator.cross_validate(*reader.scored_items(), seed=args.seed)
 
     # Output results
     for item in scored_test_items:
