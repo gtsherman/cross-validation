@@ -53,7 +53,7 @@ class KFoldValidator:
         :return: A list of lists, each sublist representing a fold
         """
         num_per_chunk = int(max(1, math.ceil(len(scoreds) / float(self.num_folds))))
-        folds = [scoreds[i:i + num_per_chunk] for i in xrange(0, len(scoreds), num_per_chunk)]
+        folds = [scoreds[i:i + num_per_chunk] for i in range(0, len(scoreds), num_per_chunk)]
 
         self.stderr('Split into {} folds'.format(str(len(folds))))
         self.stderr('Items per fold: {}'.format(str(num_per_chunk)))
