@@ -56,7 +56,7 @@ if __name__ == "__main__":
     parser.add_argument('-v', '--verbose', action='store_true', help='verbose output')
     parser.add_argument('-m', '--metric', help='the metric to optimize for cross-validation; required for some input '
                                                'formats')
-    parser.add_argument('-i', '--input-format', choices=formats.keys(), help='input file format')
+    parser.add_argument('-i', '--input-format', choices=formats.keys(), help='input file format', default='trec')
     args = parser.parse_args()
 
     main(args)
