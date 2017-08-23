@@ -107,8 +107,7 @@ class KFoldValidator:
         best_parameters = max(summarized_scores.keys(), key=lambda params: summarized_scores[params])
         return best_parameters, summarized_scores[best_parameters]
 
-    @staticmethod
-    def test(testing, parameters):
+    def test(self, testing, parameters):
         """
         Score the test items using previously determined parameters
         :param testing: A list or tuple of Scored items
