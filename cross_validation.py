@@ -103,8 +103,8 @@ class KFoldValidator:
                 parameter_items[parameters][item.name] = item.parameter_scores[parameters]
 
         # Summarizes each bucket of scores per parameter setting and finds the highest summary score
-        summarized_scores = {params: self.summarize(items) for (params, items) in parameter_items.iteritems()}
-        best_parameters = max(summarized_scores.iterkeys(), key=lambda params: summarized_scores[params])
+        summarized_scores = {params: self.summarize(items) for (params, items) in parameter_items.items()}
+        best_parameters = max(summarized_scores.keys(), key=lambda params: summarized_scores[params])
         return best_parameters, summarized_scores[best_parameters]
 
     @staticmethod
