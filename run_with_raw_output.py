@@ -9,7 +9,7 @@ from run import get_args, load_data
 class RawResultKFoldValidator(KFoldValidator):
     def __init__(self, raw_dir, num_folds=10, verbose=False):
         self.raw_dir = raw_dir
-        super(RawResultKFoldValidator, self).__init__(num_folds=num_folds, verbose=verbose)
+        super().__init__(num_folds=num_folds, verbose=verbose)
 
     def test(self, testing, parameters):
         return {item.name: self.read_trec_output(item.name, parameters) for item in testing}
