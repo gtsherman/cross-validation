@@ -41,7 +41,7 @@ To identify the optimal parameter setting, the train split must be summarized in
 For example, in a [minimax](https://en.wikipedia.org/wiki/Minimax) scenario, it may be preferable to use the _minimum_ score in the training split as the summary statistic. To do so, we simply override the `KFoldValidator` class like so:
 
 ```python
-class MinimaxKFoldValidator:
+class MinimaxKFoldValidator(KFoldValidator):
     def summarize(self, items):
         return min(items.values())
 ```
