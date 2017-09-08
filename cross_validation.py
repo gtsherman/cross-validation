@@ -1,11 +1,11 @@
 import collections
 import math
+import os
 import random
 import sys
 
 
 class KFoldValidator:
-
     def __init__(self, num_folds=10, verbose=False):
         self.num_folds = num_folds
         self.stderr = self.verbose_stderr if verbose else self.silent_stderr
@@ -123,6 +123,30 @@ class KFoldValidator:
         :return: A single summary value, in this case the arithmetic mean
         """
         return float(sum(items.values())) / max(len(items), 1)
+
+
+class RawResultKFoldValidator(KFoldValidator):
+    """Gives the optimal raw results for each fold, rather than the per-fold scores"""
+
+    def __init__(self, raw_dir, num_folds=10, verbose=False):
+        self._raw_dir = raw_dir
+        super().__init__(num_folds=num_folds, verbose=verbose)
+
+    def test(self, testing, parameters):
+        return {item.name: self._read_output(item.name, parameters) for item in testing}
+
+    def _read_output(self, item, parameters):
+        """
+        Reads the raw output files for each parameter ID. This implementation assumes the item name occurs first in
+        each line of the raw results, separated with whitespace, as is the case in TREC output format.
+        :param item: The identifier, e.g. query number, of the block of raw results needed from the file
+        :param parameters: The identifier for the parameters, assuming that each file is named by its parameter setting
+        :return: The string containing the raw results for the particular item/parameter tuple
+        """
+        infile = os.path.join(self._raw_dir, parameters)
+        with open(infile) as f:
+            raw_results = [line for line in f if item == line.split()[0]]
+        return ''.join(raw_results).strip()
 
 
 class Scored:
