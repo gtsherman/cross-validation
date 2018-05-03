@@ -3,6 +3,7 @@
 import argparse
 import os
 import random
+import scipy.stats
 
 from cross_validation import KFoldValidator, RawResultKFoldValidator
 from score_readers import ScoreReader, TrecScoreReader
@@ -83,7 +84,7 @@ def get_args(**extra_args):
                                                'formats')
     parser.add_argument('-i', '--input-format', choices=formats.keys(), help='input file format', default='trec')
     parser.add_argument('--raw-dir', help='the directory containing the raw results (as opposed to the scored results)')
-    parser.add_argument('--other-dir', help='the second directory to compare results against', action='append')
+    parser.add_argument('--other-directory', help='the second directory to compare results against', action='append')
 
     if extra_args:
         for extra_arg in extra_args:
@@ -124,7 +125,7 @@ if __name__ == "__main__":
 
     if args.raw_dir:
         main_with_raw_output(args)
-    elif args.other_dir:
+    elif args.other_directory:
         main_with_ttest(args)
     else:
         main(args)
