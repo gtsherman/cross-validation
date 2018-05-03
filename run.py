@@ -4,13 +4,14 @@ import argparse
 import os
 import random
 
-from cross_validation import KFoldValidator
+from cross_validation import KFoldValidator, RawResultKFoldValidator
 from score_readers import ScoreReader, TrecScoreReader
 
 formats = {
     'tsv': ScoreReader,
     'trec': TrecScoreReader
 }
+
 
 def main(args):
     reader = load_data(args)
@@ -24,6 +25,42 @@ def main(args):
         print('{}\t{}'.format(item, str(scored_test_items[item])))
     if args.summarize:
         print('all\t{}'.format(str(validator.summarize(scored_test_items))))
+
+
+def main_with_raw_output(args):
+    reader = load_data(args)
+
+    # Run cross-validation
+    validator = RawResultKFoldValidator(args.raw_dir, num_folds=args.folds, verbose=args.verbose)
+    scored_test_items = validator.cross_validate(*reader.scored_items(), seed=args.seed)
+
+    for item in scored_test_items:
+        print(scored_test_items[item])
+
+
+def main_with_ttest(args):
+    first_directory = args.directory
+    second_directory = args.other_directory
+
+    first_reader = load_data(args)
+    args.directory = second_directory
+    second_reader = load_data(args)
+
+    # Run cross-validation
+    validator = KFoldValidator(num_folds=args.folds, verbose=args.verbose)
+    first_scored_test_items = validator.cross_validate(*first_reader.scored_items(), seed=args.seed)
+    second_scored_test_items = validator.cross_validate(*second_reader.scored_items(), seed=args.seed)
+
+    # Get the scores in order. Reiterate over the first_scored_test_items even for pulling from
+    # second_scored_test_items to ensure the order and items match.
+    first_items = [first_scored_test_items[item] for item in first_scored_test_items]
+    second_items = [second_scored_test_items[item] for item in first_scored_test_items]
+
+    pval = scipy.stats.ttest_rel(first_items, second_items)[1]
+
+    print('\t'.join([first_directory[0], str(validator.summarize(first_scored_test_items))]))
+    print('\t'.join([second_directory[0], str(validator.summarize(second_scored_test_items))]))
+    print('two-tailed paired t-test p-value:', pval)
 
 
 def get_args(**extra_args):
@@ -45,6 +82,8 @@ def get_args(**extra_args):
     parser.add_argument('-m', '--metric', help='the metric to optimize for cross-validation; required for some input '
                                                'formats')
     parser.add_argument('-i', '--input-format', choices=formats.keys(), help='input file format', default='trec')
+    parser.add_argument('--raw-dir', help='the directory containing the raw results (as opposed to the scored results)')
+    parser.add_argument('--other-dir', help='the second directory to compare results against', action='append')
 
     if extra_args:
         for extra_arg in extra_args:
@@ -82,4 +121,10 @@ def load_data(args):
 
 if __name__ == "__main__":
     args = get_args()
-    main(args)
+
+    if args.raw_dir:
+        main_with_raw_output(args)
+    elif args.other_dir:
+        main_with_ttest(args)
+    else:
+        main(args)
