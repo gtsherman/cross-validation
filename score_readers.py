@@ -5,15 +5,22 @@ import cross_validation
 class ScoreReader:
     def __init__(self):
         self._item_parameter_scores = collections.defaultdict(dict)
+        self._parameter_id = 0
 
-    def read(self, file, metric):
+    def read(self, file, metric, parameter_id=None):
         """
         Read a simple key/value file and store data. Assumes file is a whitespace-separated list of item/value pairs,
         one per line.
+        :param parameter_id: Optional parameter_id attribute to identify this file. If absent, will increment
         :param file: The file to read
         :param metric: Ignored in this implementation, but relevant to subclasses
         """
-        parameter_id = file.split('/')[-1]
+        if parameter_id is None:
+            parameter_id = self._parameter_id
+            self._parameter_id += 1
+        self._parse_data(file, metric, parameter_id)
+
+    def _parse_data(self, file, metric, parameter_id):
         with open(file) as f:
             for line in f:
                 item, value = line.strip().split()
@@ -29,18 +36,21 @@ class ScoreReader:
 
 
 class TrecScoreReader(ScoreReader):
-    def read(self, file, metric):
+    def _parse_data(self, file, metric, parameter_id):
         """
         Read a trec_eval file and store query->parameters->value.
+        :param parameter_id: Optional parameter_id attribute to identify this file. If absent, will increment
         :param file: The file to read
         :param metric: The metric to find in the file
         """
-        parameter_id = file.split('/')[-1]
-        with open(file) as f:
-            for line in f:
-                parts = line.split()
-                if len(parts) >= 3 and parts[0].lower() == metric:
-                    query, value = parts[1], parts[2].strip()
-                    if query == 'all':
-                        continue
-                    self._item_parameter_scores[query][parameter_id] = float(value)
+        for line in file:
+            try:
+                line = line.decode('utf-8')
+            except AttributeError:
+                pass
+            parts = line.split()
+            if len(parts) >= 3 and parts[0].lower() == metric:
+                query, value = parts[1], parts[2].strip()
+                if query == 'all':
+                    continue
+                self._item_parameter_scores[query][parameter_id] = float(value)

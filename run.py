@@ -3,6 +3,8 @@
 import argparse
 import os
 import random
+import tarfile
+
 import scipy.stats
 
 from cross_validation import KFoldValidator, RawResultKFoldValidator
@@ -101,21 +103,32 @@ def load_data(args):
         print('Must specify metric for this input format.')
         exit()
 
+    reader = formats[args.input_format]()
+
     # Load a list of all the supplied files
-    files = []
     if args.file is not None:
-        files += args.file
+        for filepath in args.file:
+            if os.path.isfile(filepath):
+                with open(filepath) as f:
+                    reader.read(f, args.metric, parameter_id=filepath.split('/')[-1])
     if args.directory is not None:
-        files += [os.path.join(directory, file) for directory in args.directory for file in
-                  os.listdir(directory) if os.path.isfile(os.path.join(directory, file))]
-    if len(files) == 0:
+        for directory in args.directory:
+            if os.path.isdir(directory):
+                for file in os.listdir(directory):
+                    filepath = os.path.join(directory, file)
+                    if os.path.isfile(filepath):
+                        with open(filepath) as f:
+                            reader.read(f, args.metric, parameter_id=filepath.split('/')[-1])
+            elif tarfile.is_tarfile(directory):
+                archive = tarfile.open(directory)
+                for member in archive.getmembers():
+                    f = archive.extractfile(member)
+                    if f is not None:
+                        reader.read(f, args.metric, parameter_id=member.name.split('/')[-1])
+                archive.close()
+    if len(reader.scored_items()) == 0:
         print('Requires at least one file to run.')
         exit()
-
-    # Read data
-    reader = formats[args.input_format]()
-    for file in files:
-        reader.read(file, args.metric)
 
     return reader
 

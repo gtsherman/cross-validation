@@ -3,6 +3,7 @@ import math
 import os
 import random
 import sys
+import tarfile
 
 
 class KFoldValidator:
@@ -133,9 +134,20 @@ class RawResultKFoldValidator(KFoldValidator):
         super().__init__(num_folds=num_folds, verbose=verbose)
 
     def test(self, testing, parameters):
-        return {item.name: self._read_output(item.name, parameters) for item in testing}
+        raw_dir = self._raw_dir
+        if not os.path.isdir(raw_dir) and tarfile.is_tarfile(raw_dir):
+            raw_dir = tarfile.open(raw_dir)
 
-    def _read_output(self, item, parameters):
+        raw_results = {item.name: self._read_output(raw_dir, item.name, parameters) for item in testing}
+
+        try:
+            raw_dir.close()
+        except AttributeError:
+            pass
+
+        return raw_results
+
+    def _read_output(self, raw_dir, item, parameters):
         """
         Reads the raw output files for each parameter ID. This implementation assumes the item name occurs first in
         each line of the raw results, separated with whitespace, as is the case in TREC output format.
@@ -143,9 +155,18 @@ class RawResultKFoldValidator(KFoldValidator):
         :param parameters: The identifier for the parameters, assuming that each file is named by its parameter setting
         :return: The string containing the raw results for the particular item/parameter tuple
         """
-        infile = os.path.join(self._raw_dir, parameters)
-        with open(infile) as f:
-            raw_results = [line for line in f if item == line.split()[0]]
+        try:
+            infile = raw_dir.extractfile(parameters)
+            if infile is not None:
+                raw_results = []
+                for line in infile:
+                    line = line.decode('utf-8')
+                    if item == line.split()[0]:
+                        raw_results.append(line)
+        except AttributeError:  # not a tar file
+            infile = os.path.join(raw_dir, parameters)
+            with open(infile) as f:
+                raw_results = [line for line in f if item == line.split()[0]]
         return ''.join(raw_results).strip()
 
 
