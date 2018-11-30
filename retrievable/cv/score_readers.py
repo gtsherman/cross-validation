@@ -1,5 +1,5 @@
 import collections
-import cross_validation
+from retrievable.cv.cross_validation import Scored
 
 
 class ScoreReader:
@@ -31,7 +31,7 @@ class ScoreReader:
         Get the stored query scores as a tuple of Scored instances.
         :return: A list of Scored instances
         """
-        return [cross_validation.Scored(query, **self._item_parameter_scores[query]) for query in
+        return [Scored(query, **self._item_parameter_scores[query]) for query in
                 self._item_parameter_scores]
 
 

@@ -2,7 +2,7 @@
 
 import statistics
 
-from cross_validation import KFoldValidator
+from retrievable.cv.cross_validation import KFoldValidator
 from run import get_args, load_data
 
 

@@ -7,8 +7,8 @@ import tarfile
 
 import scipy.stats
 
-from cross_validation import KFoldValidator, RawResultKFoldValidator
-from score_readers import ScoreReader, TrecScoreReader
+from retrievable.cv.cross_validation import KFoldValidator, RawResultKFoldValidator
+from retrievable.cv.score_readers import ScoreReader, TrecScoreReader
 
 formats = {
     'tsv': ScoreReader,
@@ -16,7 +16,17 @@ formats = {
 }
 
 
-def main(args):
+def main(args=None):
+    args = get_args()
+
+    if args.raw_dir:
+        main_with_raw_output(args)
+    elif args.other_directory:
+        main_with_ttest(args)
+    else:
+        main_default(args)
+
+def main_default(args):
     reader = load_data(args)
 
     # Run cross-validation
@@ -134,11 +144,4 @@ def load_data(args):
 
 
 if __name__ == "__main__":
-    args = get_args()
-
-    if args.raw_dir:
-        main_with_raw_output(args)
-    elif args.other_directory:
-        main_with_ttest(args)
-    else:
-        main(args)
+    main()
